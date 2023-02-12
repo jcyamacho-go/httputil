@@ -24,3 +24,9 @@ test:
 
 .PHONY: check
 check: tidy lint test-race
+
+.PHONY: release
+release:
+	@[ "${VERSION}" ] || ( echo ">> env var VERSION is not set"; exit 1 )
+	git tag ${VERSION}
+	git push origin ${VERSION}
