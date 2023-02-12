@@ -14,6 +14,7 @@ helpers to create http rest services
 - write xml response
 - write text response
 - write blob response
+- pprof handler
 
 ## examples
 
@@ -73,4 +74,11 @@ func CreateTaskHandler(svc TaskService) http.HandlerFunc {
  }, httputil.WithErrorWriter(errorWriter))
 }
 
+```
+
+- pprof handler
+
+```go
+r := chi.NewRouter()
+r.Handle("/debug/*", pprof.NewHandler())
 ```
