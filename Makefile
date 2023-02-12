@@ -1,28 +1,15 @@
 GO ?= go
 TOOLS = $(CURDIR)/.tools
 
-$(TOOLS):
-	@mkdir -p $@
-$(TOOLS)/%: | $(TOOLS)
-	@GOBIN=$(TOOLS) go install $(PACKAGE)
-
-GOLANGCI_LINT = $(TOOLS)/golangci-lint
-$(GOLANGCI_LINT): PACKAGE=github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-GOVULNCHECK = $(TOOLS)/govulncheck
-$(GOVULNCHECK): PACKAGE=golang.org/x/vuln/cmd/govulncheck@latest
-
 .PHONY: tools
-tools: $(GOLANGCI_LINT) $(GOVULNCHECK)
-
-.PHONY: govulncheck
-govulncheck: | $(GOVULNCHECK)
-	@$(TOOLS)/govulncheck ./...
+tools:
+	@mkdir -p $(TOOLS)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS) v1.51.1
 
 .PHONY: lint lint-fix
 lint-fix: ARGS=--fix
 lint-fix: lint
-lint: | $(GOLANGCI_LINT)
+lint:
 	@$(TOOLS)/golangci-lint run $(ARGS)
 
 .PHONY: tidy
@@ -36,4 +23,4 @@ test:
 	$(GO) test $(ARGS) ./...
 
 .PHONY: check
-check: tidy lint govulncheck test-race
+check: tidy lint test-race

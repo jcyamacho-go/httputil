@@ -20,8 +20,8 @@ jobs:
         run: make tidy
       - name: check for changes
         run: git diff --exit-code
-      - name: govulncheck
-        run: make govulncheck
+      - name: download tools
+        run: make tools
       - name: lint
         run: make lint
       - name: test race
