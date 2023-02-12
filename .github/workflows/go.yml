@@ -1,0 +1,28 @@
+name: Go
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: use go1.18
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - name: tidy
+        run: make tidy
+      - name: check for changes
+        run: git diff --exit-code
+      - name: govulncheck
+        run: make govulncheck
+      - name: lint
+        run: make lint
+      - name: test race
+        run: make test-race
