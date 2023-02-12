@@ -1,0 +1,21 @@
+project_name: "httputil"
+before:
+  hooks:
+    - make tools
+    - make tidy
+    - make lint
+    - make test-race
+builds:
+  - skip: true
+release:
+  draft: true
+checksum:
+  name_template: checksums.txt
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
