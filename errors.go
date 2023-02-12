@@ -67,10 +67,18 @@ var DefaultErrorWriter ErrorWriter = ErrorWriterFunc(func(w http.ResponseWriter,
 
 	he := &HTTPError{}
 	if errors.As(err, &he) {
-		code = he.Code()
+		code = httpErrorStatusCode(he.Code())
 	}
 
 	if err := WriteJSON(w, code, res); err != nil {
 		panic(err)
 	}
 })
+
+func httpErrorStatusCode(code int) int {
+	if code >= 400 && code <= 599 {
+		return code
+	}
+
+	return http.StatusInternalServerError
+}
