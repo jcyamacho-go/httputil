@@ -11,7 +11,7 @@ import (
 )
 
 func TestDefaultErrorWriter_StatusCode500(t *testing.T) {
-	message := "Unauthorized"
+	message := "unauthorized"
 	err := errors.New(message)
 
 	w := httptest.NewRecorder()

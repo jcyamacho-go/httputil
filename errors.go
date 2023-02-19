@@ -56,18 +56,19 @@ func (ew ErrorWriterFunc) Write(w http.ResponseWriter, err error) {
 	ew(w, err)
 }
 
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
 var DefaultErrorWriter ErrorWriter = ErrorWriterFunc(func(w http.ResponseWriter, err error) {
-	res := struct {
-		Error string `json:"error"`
-	}{
+	res := errorResponse{
 		Error: err.Error(),
 	}
 
 	code := http.StatusInternalServerError
 
-	he := &HTTPError{}
-	if errors.As(err, &he) {
-		code = httpErrorStatusCode(he.Code())
+	if herr := new(HTTPError); errors.As(err, &herr) {
+		code = httpErrorStatusCode(herr.Code())
 	}
 
 	if err := WriteJSON(w, code, res); err != nil {

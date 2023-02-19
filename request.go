@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-playground/form/v4"
+	form "github.com/go-playground/form/v4"
 )
 
 const (
