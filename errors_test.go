@@ -10,12 +10,12 @@ import (
 	"testing"
 )
 
-func TestDefaultErrorWriter_StatusCode500(t *testing.T) {
+func TestDefaultErrorEncoder_StatusCode500(t *testing.T) {
 	message := "unauthorized"
 	err := errors.New(message)
 
 	w := httptest.NewRecorder()
-	DefaultErrorWriter.Write(w, err)
+	DefaultErrorEncoder.Encode(w, nil, err)
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("invalid code, want: 500, got: %d", w.Code)
@@ -27,7 +27,7 @@ func TestDefaultErrorWriter_StatusCode500(t *testing.T) {
 	}
 }
 
-func FuzzDefaultErrorWriter(f *testing.F) {
+func FuzzDefaultErrorEncoder(f *testing.F) {
 	f.Add(400, http.StatusText(400))
 	f.Add(403, http.StatusText(403))
 	f.Add(404, "error-1")
@@ -38,7 +38,7 @@ func FuzzDefaultErrorWriter(f *testing.F) {
 		w := httptest.NewRecorder()
 		err := NewHTTPError(code).WithMessage(message)
 
-		DefaultErrorWriter.Write(w, err)
+		DefaultErrorEncoder.Encode(w, nil, err)
 
 		if v := httpErrorStatusCode(code); w.Code != v {
 			t.Errorf("invalid code, want: %d, got: %d", v, w.Code)

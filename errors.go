@@ -46,21 +46,21 @@ func (e *HTTPError) WithCause(err error) *HTTPError {
 	}
 }
 
-type ErrorWriter interface {
-	Write(w http.ResponseWriter, err error)
+type ErrorEncoder interface {
+	Encode(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type ErrorWriterFunc func(w http.ResponseWriter, err error)
+type ErrorEncoderFunc func(w http.ResponseWriter, r *http.Request, err error)
 
-func (ew ErrorWriterFunc) Write(w http.ResponseWriter, err error) {
-	ew(w, err)
+func (f ErrorEncoderFunc) Encode(w http.ResponseWriter, r *http.Request, err error) {
+	f(w, r, err)
 }
 
 type errorResponse struct {
 	Error string `json:"error"`
 }
 
-var DefaultErrorWriter ErrorWriter = ErrorWriterFunc(func(w http.ResponseWriter, err error) {
+var DefaultErrorEncoder ErrorEncoder = ErrorEncoderFunc(func(w http.ResponseWriter, r *http.Request, err error) {
 	res := errorResponse{
 		Error: err.Error(),
 	}

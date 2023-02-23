@@ -49,4 +49,4 @@ linters-settings:
   gocyclo:
     min-complexity: 20
   goimports:
-    local-prefixes: github.com/jcyamacho/httputil
+    local-prefixes: github.com/jcyamacho-go/httputil
