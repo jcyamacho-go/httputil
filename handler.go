@@ -2,32 +2,42 @@ package httputil
 
 import "net/http"
 
-type Config struct {
-	errorEncoder ErrorEncoder
+type (
+	HandlerFunc func(w http.ResponseWriter, r *http.Request) error
+	Middleware  func(next HandlerFunc) HandlerFunc
+)
+
+type Handler struct {
+	errorEncoder ErrorEncoderFunc
+	middlewares  []Middleware
+	handler      HandlerFunc
 }
 
-type Option func(*Config)
-
-func WithErrorWriter(ew ErrorEncoder) Option {
-	return func(c *Config) {
-		c.errorEncoder = ew
+func NewHandler(h HandlerFunc) *Handler {
+	return &Handler{
+		handler:      h,
+		errorEncoder: defaultErrorEncoder,
 	}
 }
 
-type Handler func(w http.ResponseWriter, r *http.Request) error
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handler := h.handler
 
-func NewHandler(h Handler, options ...Option) http.HandlerFunc {
-	cfg := Config{
-		errorEncoder: DefaultErrorEncoder,
+	for i := len(h.middlewares) - 1; i >= 0; i-- {
+		handler = h.middlewares[i](handler)
 	}
 
-	for _, option := range options {
-		option(&cfg)
+	if err := handler(w, r); err != nil {
+		h.errorEncoder(w, r, err)
 	}
+}
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := h(w, r); err != nil {
-			cfg.errorEncoder.Encode(w, r, err)
-		}
-	}
+func (h *Handler) WithErrorEncoder(errorEncoder ErrorEncoderFunc) *Handler {
+	h.errorEncoder = errorEncoder
+	return h
+}
+
+func (h *Handler) WithMiddlewares(middlewares ...Middleware) *Handler {
+	h.middlewares = middlewares
+	return h
 }

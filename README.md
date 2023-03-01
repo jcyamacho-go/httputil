@@ -18,12 +18,14 @@ helpers to create http rest services
 
 ## examples
 
+- [example](./example/main.go) project
+
 - handler with json body
 
 ```go
 var ErrBadRequest = httputil.NewHTTPError(http.StatusBadRequest)
 
-func CreateTaskHandler(svc TaskService) http.HandlerFunc {
+func CreateTaskHandler(svc TaskService) http.Handler {
  return httputil.NewHandler(func(w http.ResponseWriter, r *http.Request) error {
   var req CreateTaskRequest
   if err := httputil.BindJSON(r, &req); err != nil {
@@ -43,7 +45,7 @@ func CreateTaskHandler(svc TaskService) http.HandlerFunc {
 - handler with query params
 
 ```go
-func SearchTaskHandler(svc TaskService) http.HandlerFunc {
+func SearchTaskHandler(svc TaskService) http.Handler {
  return httputil.NewHandler(func(w http.ResponseWriter, r *http.Request) error {
   var req SearchTaskRequest
   if err := httputil.BindQuery(r, &req, httputil.WithTagName("json")); err != nil {
@@ -60,18 +62,18 @@ func SearchTaskHandler(svc TaskService) http.HandlerFunc {
 }
 ```
 
-- custom error writer
+- custom error encoder
 
 ```go
 
-var errorWriter = httputil.ErrorWriterFunc(func(w http.ResponseWriter, err error) {
+func errorEncoder(w http.ResponseWriter, _ *http.Request, err error) {
  _ = httputil.WriteString(w, http.StatusInternalServerError, err.Error())
-})
+}
 
-func CreateTaskHandler(svc TaskService) http.HandlerFunc {
+func CreateTaskHandler(svc TaskService) http.Handler {
  return httputil.NewHandler(func(w http.ResponseWriter, r *http.Request) error {
   // ...
- }, httputil.WithErrorWriter(errorWriter))
+ }).WithErrorEncoder(errorEncoder)
 }
 
 ```

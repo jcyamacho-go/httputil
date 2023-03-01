@@ -1,4 +1,4 @@
-module github.com/jcyamacho/httputil
+module github.com/jcyamacho-go/httputil
 
 go 1.18
 

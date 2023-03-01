@@ -22,7 +22,7 @@ func init() {
 	handler = mux
 }
 
-// Handler returns a a pprof handler for the routes: /debug/pprof/*
+// Handler returns a pprof handler for the routes: /debug/pprof/*
 func Handler() http.Handler {
 	return handler
 }

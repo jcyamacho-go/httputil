@@ -22,6 +22,13 @@ test-race: test
 test:
 	$(GO) test $(ARGS) ./...
 
+COVERAGE_MODE    = atomic
+COVERAGE_PROFILE = coverage.out
+.PHONY: test-cover-html
+test-cover-html:
+	@$(GO) test -race -covermode=$(COVERAGE_MODE) -coverprofile=$(COVERAGE_PROFILE) ./... \
+	&& go tool cover -html $(COVERAGE_PROFILE) -o coverage.html
+
 .PHONY: check
 check: tidy lint test-race
 

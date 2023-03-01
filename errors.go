@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -18,6 +19,10 @@ func NewHTTPError(code int) *HTTPError {
 	}
 }
 
+func (e *HTTPError) Message() string {
+	return e.message
+}
+
 func (e *HTTPError) Code() int {
 	return e.code
 }
@@ -27,7 +32,11 @@ func (e *HTTPError) Unwrap() error {
 }
 
 func (e *HTTPError) Error() string {
-	return e.message
+	if e.cause == nil {
+		return fmt.Sprintf("[%d] %s", e.code, e.message)
+	}
+
+	return fmt.Sprintf("[%d] %s: %v", e.code, e.message, e.cause)
 }
 
 func (e *HTTPError) WithMessage(m string) *HTTPError {
@@ -46,35 +55,39 @@ func (e *HTTPError) WithCause(err error) *HTTPError {
 	}
 }
 
-type ErrorEncoder interface {
-	Encode(w http.ResponseWriter, r *http.Request, err error)
+func ErrorFrom(err error) *HTTPError {
+	if err == nil {
+		return nil
+	}
+
+	if herr := new(HTTPError); errors.As(err, &herr) {
+		return herr
+	}
+
+	return NewHTTPError(http.StatusInternalServerError).WithCause(err)
 }
 
 type ErrorEncoderFunc func(w http.ResponseWriter, r *http.Request, err error)
 
-func (f ErrorEncoderFunc) Encode(w http.ResponseWriter, r *http.Request, err error) {
-	f(w, r, err)
-}
+func defaultErrorEncoder(w http.ResponseWriter, r *http.Request, err error) {
+	herr := ErrorFrom(err)
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
-var DefaultErrorEncoder ErrorEncoder = ErrorEncoderFunc(func(w http.ResponseWriter, r *http.Request, err error) {
 	res := errorResponse{
-		Error: err.Error(),
+		Code:  herr.Code(),
+		Error: herr.Message(),
 	}
 
-	code := http.StatusInternalServerError
-
-	if herr := new(HTTPError); errors.As(err, &herr) {
-		code = httpErrorStatusCode(herr.Code())
-	}
+	code := httpErrorStatusCode(herr.Code())
 
 	if err := WriteJSON(w, code, res); err != nil {
 		panic(err)
 	}
-})
+}
+
+type errorResponse struct {
+	Code  int    `json:"code"`
+	Error string `json:"error"`
+}
 
 func httpErrorStatusCode(code int) int {
 	if code >= 400 && code <= 599 {
