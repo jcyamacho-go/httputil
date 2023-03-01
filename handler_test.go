@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,27 +34,32 @@ func TestHandler_ServeHTTP(t *testing.T) {
 func TestHandler_WithMiddleware(t *testing.T) {
 	var calls []string
 
-	var middleware1 Middleware = func(next HandlerFunc) HandlerFunc {
-		calls = append(calls, "mdw-1")
-		return next
-	}
+	middleware := func(name string) Middleware {
+		return func(next HandlerFunc) HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) error {
+				calls = append(calls, fmt.Sprintf("%s-start", name))
 
-	var middleware2 Middleware = func(next HandlerFunc) HandlerFunc {
-		calls = append(calls, "mdw-2")
-		return next
+				defer func() {
+					calls = append(calls, fmt.Sprintf("%s-end", name))
+				}()
+
+				return next(w, r)
+			}
+		}
 	}
 
 	handler := NewHandler(func(w http.ResponseWriter, r *http.Request) error {
+		calls = append(calls, "handler")
 		return nil
 	}).WithMiddlewares(
-		middleware1,
-		middleware2,
+		middleware("mdw-1"),
+		middleware("mdw-2"),
 	)
 
 	handler.ServeHTTP(nil, nil)
 
 	got := strings.Join(calls, ",")
-	want := "mdw-2,mdw-1"
+	want := "mdw-1-start,mdw-2-start,handler,mdw-2-end,mdw-1-end"
 
 	if got != want {
 		t.Errorf("invalid middleware calls, got: %s, want: %s", got, want)

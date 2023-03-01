@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,14 +14,15 @@ import (
 )
 
 func logger(next httputil.HandlerFunc) httputil.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
+	return func(w http.ResponseWriter, r *http.Request) (err error) {
 		start := time.Now()
-		err := next(w, r)
-		duration := time.Since(start)
 
-		log.Printf("[%s] %s (%v) %v \n", r.Method, r.URL, duration, err)
+		defer func() {
+			duration := time.Since(start)
+			log.Printf("[%s] %s (%v): %v \n", r.Method, r.URL, duration, err)
+		}()
 
-		return err
+		return next(w, r)
 	}
 }
 
@@ -28,12 +31,22 @@ func main() {
 	r.Use(pprof.Middleware)
 
 	r.Route("/hello", func(r chi.Router) {
-		handler := httputil.NewHandler(hello).
+		handler := httputil.NewHandler(helloHandler).
 			WithMiddlewares(logger).
 			ServeHTTP
 
 		r.Get("/", handler)
 		r.Get("/{name}", handler)
+	})
+
+	r.Route("/error", func(r chi.Router) {
+		handler := httputil.NewHandler(errorHandler).
+			WithMiddlewares(logger).
+			ServeHTTP
+
+		r.Get("/", handler)
+		r.Get("/{code}", handler)
+		r.Get("/{code}/{message}", handler)
 	})
 
 	addr := "0.0.0.0:3000"
@@ -45,7 +58,26 @@ func main() {
 	}
 }
 
-func hello(w http.ResponseWriter, r *http.Request) error {
+func errorHandler(w http.ResponseWriter, r *http.Request) error {
+	code := http.StatusInternalServerError
+
+	if sc := chi.URLParam(r, "code"); sc != "" {
+		if c, err := strconv.Atoi(sc); err == nil {
+			code = c
+		}
+	}
+
+	err := httputil.NewHTTPError(code).
+		WithCause(errors.New("demo error"))
+
+	if msg := chi.URLParam(r, "message"); msg != "" {
+		err = err.WithMessage(msg)
+	}
+
+	return err
+}
+
+func helloHandler(w http.ResponseWriter, r *http.Request) error {
 	var in helloInput
 
 	if err := httputil.BindQuery(r, &in); err != nil {
@@ -69,5 +101,5 @@ type helloInput struct {
 }
 
 type helloReply struct {
-	Message string `json:"name"`
+	Message string `json:"message"`
 }
