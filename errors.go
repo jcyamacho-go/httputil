@@ -114,7 +114,7 @@ func ErrorFrom(err error) *HTTPError {
 		return herr
 	}
 
-	return NewStatusError(http.StatusInternalServerError).WithCause(err)
+	return ErrInternalServerError.WithCause(err)
 }
 
 type ErrorEncoderFunc func(w http.ResponseWriter, r *http.Request, err error)
