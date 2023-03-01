@@ -33,11 +33,17 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) WithErrorEncoder(errorEncoder ErrorEncoderFunc) *Handler {
-	h.errorEncoder = errorEncoder
-	return h
+	return &Handler{
+		errorEncoder: errorEncoder,
+		middlewares:  h.middlewares,
+		handler:      h.handler,
+	}
 }
 
 func (h *Handler) WithMiddlewares(middlewares ...Middleware) *Handler {
-	h.middlewares = middlewares
-	return h
+	return &Handler{
+		errorEncoder: h.errorEncoder,
+		middlewares:  middlewares,
+		handler:      h.handler,
+	}
 }

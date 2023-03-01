@@ -22,7 +22,7 @@ func TestErrorFrom_Std_Error(t *testing.T) {
 }
 
 func TestErrorFrom_Wrapped(t *testing.T) {
-	err := NewHTTPError(http.StatusBadRequest).
+	err := NewStatusError(http.StatusBadRequest).
 		WithMessage("error message")
 
 	nerr := fmt.Errorf("demo error: %w", err)
@@ -41,7 +41,7 @@ func FuzzHTTPError_Code(f *testing.F) {
 	f.Add(503)
 
 	f.Fuzz(func(t *testing.T, code int) {
-		err := NewHTTPError(code)
+		err := NewStatusError(code)
 		if c := err.Code(); c != code {
 			t.Errorf("invalid code, want: %d, got: %d", code, c)
 		}
@@ -73,7 +73,7 @@ func FuzzDefaultErrorEncoder(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, code int, message string) {
 		w := httptest.NewRecorder()
-		err := NewHTTPError(code).WithMessage(message)
+		err := NewError(code, message)
 
 		defaultErrorEncoder(w, nil, err)
 

@@ -6,16 +6,66 @@ import (
 	"net/http"
 )
 
+var (
+	ErrBadRequest                    = NewStatusError(http.StatusBadRequest)
+	ErrUnauthorized                  = NewStatusError(http.StatusUnauthorized)
+	ErrPaymentRequired               = NewStatusError(http.StatusPaymentRequired)
+	ErrForbidden                     = NewStatusError(http.StatusForbidden)
+	ErrNotFound                      = NewStatusError(http.StatusNotFound)
+	ErrMethodNotAllowed              = NewStatusError(http.StatusMethodNotAllowed)
+	ErrNotAcceptable                 = NewStatusError(http.StatusNotAcceptable)
+	ErrProxyAuthRequired             = NewStatusError(http.StatusProxyAuthRequired)
+	ErrRequestTimeout                = NewStatusError(http.StatusRequestTimeout)
+	ErrConflict                      = NewStatusError(http.StatusConflict)
+	ErrGone                          = NewStatusError(http.StatusGone)
+	ErrLengthRequired                = NewStatusError(http.StatusLengthRequired)
+	ErrPreconditionFailed            = NewStatusError(http.StatusPreconditionFailed)
+	ErrRequestEntityTooLarge         = NewStatusError(http.StatusRequestEntityTooLarge)
+	ErrRequestURITooLong             = NewStatusError(http.StatusRequestURITooLong)
+	ErrUnsupportedMediaType          = NewStatusError(http.StatusUnsupportedMediaType)
+	ErrRequestedRangeNotSatisfiable  = NewStatusError(http.StatusRequestedRangeNotSatisfiable)
+	ErrExpectationFailed             = NewStatusError(http.StatusExpectationFailed)
+	ErrTeapot                        = NewStatusError(http.StatusTeapot)
+	ErrMisdirectedRequest            = NewStatusError(http.StatusMisdirectedRequest)
+	ErrUnprocessableEntity           = NewStatusError(http.StatusUnprocessableEntity)
+	ErrLocked                        = NewStatusError(http.StatusLocked)
+	ErrFailedDependency              = NewStatusError(http.StatusFailedDependency)
+	ErrTooEarly                      = NewStatusError(http.StatusTooEarly)
+	ErrUpgradeRequired               = NewStatusError(http.StatusUpgradeRequired)
+	ErrPreconditionRequired          = NewStatusError(http.StatusPreconditionRequired)
+	ErrTooManyRequests               = NewStatusError(http.StatusTooManyRequests)
+	ErrRequestHeaderFieldsTooLarge   = NewStatusError(http.StatusRequestHeaderFieldsTooLarge)
+	ErrUnavailableForLegalReasons    = NewStatusError(http.StatusUnavailableForLegalReasons)
+	ErrInternalServerError           = NewStatusError(http.StatusInternalServerError)
+	ErrNotImplemented                = NewStatusError(http.StatusNotImplemented)
+	ErrBadGateway                    = NewStatusError(http.StatusBadGateway)
+	ErrServiceUnavailable            = NewStatusError(http.StatusServiceUnavailable)
+	ErrGatewayTimeout                = NewStatusError(http.StatusGatewayTimeout)
+	ErrHTTPVersionNotSupported       = NewStatusError(http.StatusHTTPVersionNotSupported)
+	ErrVariantAlsoNegotiates         = NewStatusError(http.StatusVariantAlsoNegotiates)
+	ErrInsufficientStorage           = NewStatusError(http.StatusInsufficientStorage)
+	ErrLoopDetected                  = NewStatusError(http.StatusLoopDetected)
+	ErrNotExtended                   = NewStatusError(http.StatusNotExtended)
+	ErrNetworkAuthenticationRequired = NewStatusError(http.StatusNetworkAuthenticationRequired)
+)
+
 type HTTPError struct {
 	code    int
 	message string
 	cause   error
 }
 
-func NewHTTPError(code int) *HTTPError {
+func NewStatusError(code int) *HTTPError {
 	return &HTTPError{
 		code:    code,
 		message: http.StatusText(code),
+	}
+}
+
+func NewError(code int, message string) *HTTPError {
+	return &HTTPError{
+		code:    code,
+		message: message,
 	}
 }
 
@@ -64,7 +114,7 @@ func ErrorFrom(err error) *HTTPError {
 		return herr
 	}
 
-	return NewHTTPError(http.StatusInternalServerError).WithCause(err)
+	return NewStatusError(http.StatusInternalServerError).WithCause(err)
 }
 
 type ErrorEncoderFunc func(w http.ResponseWriter, r *http.Request, err error)

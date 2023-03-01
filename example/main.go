@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,22 +66,18 @@ func errorHandler(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	err := httputil.NewHTTPError(code).
-		WithCause(errors.New("demo error"))
-
-	if msg := chi.URLParam(r, "message"); msg != "" {
-		err = err.WithMessage(msg)
+	if message := chi.URLParam(r, "message"); message != "" {
+		return httputil.NewError(code, message)
 	}
 
-	return err
+	return httputil.NewStatusError(code)
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) error {
 	var in helloInput
 
 	if err := httputil.BindQuery(r, &in); err != nil {
-		return httputil.NewHTTPError(http.StatusBadRequest).
-			WithCause(err)
+		return httputil.ErrBadRequest.WithCause(err)
 	}
 
 	if name := chi.URLParam(r, "name"); name != "" {
